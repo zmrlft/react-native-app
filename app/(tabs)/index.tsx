@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { playAudioSmart, stopAudioPlayback, stopSpeaking } from '@/services/audioService';
+import { ImageResult, pickImageFromLibrary, takePhotoWithCamera } from '@/services/imageService';
+import { callQwenOmniAPI } from '@/services/qwenOmniService';
+import { getApiKey } from '@/services/storageService';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
+    ActivityIndicator,
+    Alert,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { pickImageFromLibrary, takePhotoWithCamera, ImageResult } from '@/services/imageService';
-import { callQwenOmniAPI, QwenOmniResponse } from '@/services/qwenOmniService';
-import { playBase64Audio, speakText, stopAudioPlayback, stopSpeaking } from '@/services/audioService';
-import { getApiKey } from '@/services/storageService';
 
 export default function ReaderScreen() {
   const [selectedImage, setSelectedImage] = useState<ImageResult | null>(null);
@@ -28,9 +29,17 @@ export default function ReaderScreen() {
     checkApiKey();
   }, []);
 
+  // 使用useFocusEffect在每次页面获得焦点时检查API密钥
+  useFocusEffect(
+    useCallback(() => {
+      checkApiKey();
+    }, [])
+  );
+
   const checkApiKey = async () => {
     const apiKey = await getApiKey();
     setHasApiKey(!!apiKey);
+    console.log('API密钥检查结果:', !!apiKey);
   };
 
   const handlePickImage = async () => {
@@ -72,9 +81,12 @@ export default function ReaderScreen() {
   };
 
   const processImage = async (base64Image: string) => {
+    // 实时检查API密钥状态
+    await checkApiKey();
+
     if (!hasApiKey) {
       Alert.alert(
-        '配置需要', 
+        '配置需要',
         '请先在设置页面配置API密钥后再使用图片识别功能',
         [
           { text: '确定', style: 'default' }
@@ -129,17 +141,29 @@ export default function ReaderScreen() {
         stopSpeaking();
         setIsPlaying(false);
       } else {
-        if (audioBase64) {
-          await playBase64Audio(audioBase64);
-        } else if (aiSummary) {
-          speakText(aiSummary);
-        }
+        // 使用智能音频播放：iOS优先TTS，Android可尝试Base64音频
+        console.log('开始智能音频播放...');
+        await playAudioSmart(audioBase64, aiSummary, false); // 设置为false优先使用TTS
+        console.log('音频播放成功');
         setIsPlaying(true);
         // 简单的播放状态管理，实际应用中可以监听播放完成事件
-        setTimeout(() => setIsPlaying(false), 5000);
+        setTimeout(() => setIsPlaying(false), 8000); // 增加到8秒，给音频更多播放时间
       }
     } catch (error) {
-      Alert.alert('错误', error instanceof Error ? error.message : '播放失败');
+      console.error('音频播放错误:', error);
+
+      let errorMessage = '播放失败';
+      if (error instanceof Error) {
+        if (error.message.includes('没有可播放的内容')) {
+          errorMessage = '没有可播放的音频内容';
+        } else if (error.message.includes('网络')) {
+          errorMessage = '网络问题，请检查网络连接后重试';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      Alert.alert('播放失败', errorMessage);
       setIsPlaying(false);
     }
   };
