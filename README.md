@@ -1,50 +1,95 @@
-# Welcome to your Expo app 👋
+## 智能阅读助手 - 鸿蒙训练营竞赛项目
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+这是一个为2025年鸿蒙训练营竞赛开发的MVP（最小可行产品）项目，名为"智能阅读助手"。该应用专为视力不佳的老年用户设计，利用AI技术帮助他们轻松阅读小字体文本。
 
-## Get started
+### 项目概述
 
-1. Install dependencies
+智能阅读助手是一款基于React Native和Expo开发的跨平台移动应用，集成了Qwen-Omni AI API，提供以下核心功能：
 
+1. 图片文字识别（OCR）
+2. AI文本摘要
+3. 文本语音朗读
+
+### 核心功能
+
+#### 1. 图片处理
+- 从相册选择图片或直接拍摄照片
+- AI自动识别图片中的文字内容
+- 生成简洁易懂的文本摘要
+
+#### 2. 语音朗读
+- 将识别和摘要的文本转换为语音播放
+- 支持播放控制（开始/停止）
+
+#### 3. API密钥管理
+- 安全的本地API密钥存储
+- 密钥配置和管理界面
+
+### 技术架构
+
+```markdown
+app/
+├── (tabs)/
+│   ├── _layout.tsx         # 标签页导航配置
+│   ├── index.tsx           # 主页（阅读器）
+│   └── explore.tsx         # 设置页
+├── _layout.tsx             # 应用根布局
+└── +not-found.tsx          # 404页面
+```
+
+
+### 主要组件
+
+#### 阅读器页面 (`index.tsx`)
+- 图片选择和拍摄功能
+- AI分析处理流程
+- 结果展示和语音播放
+- API密钥状态检查
+
+#### 设置页面 (`explore.tsx`)
+- Qwen-Omni API密钥配置
+- 密钥安全存储管理
+- 使用说明和帮助信息
+
+### 安装和运行
+
+1. 安装依赖：
    ```bash
    npm install
    ```
 
-2. Start the app
 
+2. 启动应用：
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3. 使用 Expo Go 扫描二维码或在模拟器中运行
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+### 使用说明
 
-## Get a fresh project
+1. 首次使用需在"设置"页面配置Qwen-Omni API密钥
+2. 在"阅读器"页面选择图片或拍摄照片
+3. 等待AI分析完成，查看文本摘要
+4. 点击"开始朗读"听取内容
 
-When you're ready, run:
+### 技术亮点
 
-```bash
-npm run reset-project
-```
+- **跨平台兼容**：基于React Native和Expo，支持iOS和Android
+- **AI集成**：整合Qwen-Omni API实现OCR和语音功能
+- **用户体验优化**：针对老年用户设计简洁直观的界面
+- **安全存储**：API密钥本地加密存储
+- **无障碍设计**：语音朗读功能帮助视力不佳用户
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 未来发展方向
 
-## Learn more
+1. 鸿蒙系统适配
+2. 更丰富的AI功能（翻译、关键词提取等）
+3. 个性化设置（字体大小、语音语速等）
+4. 离线识别功能
+5. 多语言支持
 
-To learn more about developing your project with Expo, look at the following resources:
+### 开发者信息
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+此项目为2025年鸿蒙训练营竞赛参赛作品所作的一个MVP项目，展示了在移动平台上集成AI能力的可行性，特别关注老年用户的实际需求。
