@@ -1,3 +1,4 @@
+import { Language, getAudioVoice, getDefaultPrompt } from '@/constants/i18n';
 import { fetch } from 'expo/fetch';
 import { getApiKey } from './storageService';
 
@@ -9,12 +10,14 @@ export interface QwenOmniResponse {
 /**
  * 调用Qwen-Omni API进行图片识别和分析
  * @param base64Image Base64编码的图片
- * @param textPrompt 文本提示，默认为识别和总结说明书
+ * @param language 用户语言设置
+ * @param textPrompt 文本提示，如果未提供将使用默认提示词
  * @returns 包含文本和音频的响应
  */
 export const callQwenOmniAPI = async (
   base64Image: string,
-  textPrompt: string = "请识别图中文字内容，并将其总结成一份简洁、易懂、口语化的使用说明，避免专业术语，并提供朗读。"
+  language: Language = 'zh',
+  textPrompt?: string
 ): Promise<QwenOmniResponse | null> => {
   const apiKey = await getApiKey();
   if (!apiKey) {
@@ -22,9 +25,13 @@ export const callQwenOmniAPI = async (
     throw new Error('请先在设置页面配置API密钥');
   }
 
+  // 使用提供的提示词或根据语言获取默认提示词
+  const finalPrompt = textPrompt || getDefaultPrompt(language);
+  const audioVoice = getAudioVoice(language);
+
   try {
     const requestBody = {
-      model: "qwen-omni-turbo",
+      model: "qwen3-omni-flash",
       messages: [
         {
           role: "user",
@@ -35,7 +42,7 @@ export const callQwenOmniAPI = async (
             },
             {
               type: "text",
-              text: textPrompt
+              text: finalPrompt
             }
           ]
         }
@@ -45,7 +52,7 @@ export const callQwenOmniAPI = async (
         include_usage: true
       },
       modalities: ["text", "audio"],
-      audio: { voice: "Cherry", format: "wav" }
+      audio: { voice: audioVoice, format: "wav" }
     };
 
     // 使用expo-fetch进行API调用
@@ -105,7 +112,7 @@ export const callQwenOmniAPI = async (
               if (parsed.usage) {
                 console.log("API Usage:", parsed.usage);
               }
-            } catch (parseError) {
+            } catch {
               // 忽略解析错误，继续处理下一行
               continue;
             }

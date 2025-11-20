@@ -1,6 +1,9 @@
+import { Language } from '@/constants/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_KEY_STORAGE_KEY = '@qwen_omni_api_key';
+const LANGUAGE_STORAGE_KEY = '@app_language';
+const DEFAULT_LANGUAGE: Language = 'zh';
 
 /**
  * 保存API密钥到本地存储
@@ -40,5 +43,35 @@ export const removeApiKey = async (): Promise<void> => {
   } catch (error) {
     console.error('Error removing API Key:', error);
     throw new Error('删除API密钥失败');
+  }
+};
+
+/**
+ * 获取用户选择的语言
+ * @returns 用户语言设置或默认语言
+ */
+export const getLanguage = async (): Promise<Language> => {
+  try {
+    const savedLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (savedLanguage === 'en' || savedLanguage === 'zh') {
+      return savedLanguage as Language;
+    }
+    return DEFAULT_LANGUAGE;
+  } catch (error) {
+    console.error('Error getting language:', error);
+    return DEFAULT_LANGUAGE;
+  }
+};
+
+/**
+ * 保存用户选择的语言
+ * @param language 用户选择的语言
+ */
+export const setLanguage = async (language: Language): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch (error) {
+    console.error('Error saving language:', error);
+    throw new Error('保存语言设置失败');
   }
 };
