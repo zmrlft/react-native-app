@@ -6,49 +6,35 @@ import { Platform } from 'react-native';
 let soundObject: Audio.Sound | null = null;
 
 /**
- * 智能音频播放：优先使用TTS，在Android上可以尝试Base64音频
- * @param audioBase64 Base64编码的音频数据
- * @param text 文本内容，用于TTS
- * @param preferBase64 是否优先尝试Base64音频（仅在Android上有效）
+ * 智能音频播放：优先使用Base64编码的音频数据，失败时降级到TTS
+ * @param audioBase64 Base64编码的音频数据（Qwen-Omni返回）
+ * @param text 文本内容，用于TTS备用方案
+ * @param language 语言设置，用于TTS的语言选择
  */
-export const playAudioSmart = async (audioBase64?: string, text?: string, preferBase64: boolean = false): Promise<void> => {
+export const playAudioSmart = async (audioBase64?: string, text?: string, language: string = 'zh'): Promise<void> => {
   try {
     // 停止当前播放
     await stopAudioPlayback();
 
-    // iOS设备或没有音频数据时，直接使用TTS
-    if (Platform.OS === 'ios' || !audioBase64 || !preferBase64) {
-      if (text && text.trim()) {
-        console.log('使用TTS播放文本...');
-        speakText(text);
-        return;
-      } else {
-        throw new Error('没有可播放的内容');
-      }
-    }
-
-    // Android设备且有音频数据时，尝试播放Base64音频
-    if (Platform.OS === 'android' && audioBase64 && preferBase64) {
+    // 如果有Base64音频数据，优先使用
+    if (audioBase64 && audioBase64.trim().length > 0) {
       try {
-        console.log('Android设备，尝试播放Base64音频...');
+        console.log('使用Base64音频数据播放...');
         await playBase64Audio(audioBase64, text);
         return;
       } catch (error) {
-        console.log('Base64音频播放失败，切换到TTS:', error);
-        if (text && text.trim()) {
-          speakText(text);
-          return;
-        }
-        throw error;
+        console.log('Base64音频播放失败，切换到TTS备用方案:', error);
       }
     }
 
-    // 备用方案
+    // Base64音频不可用或播放失败，使用TTS
     if (text && text.trim()) {
-      speakText(text);
-    } else {
-      throw new Error('没有可播放的内容');
+      console.log('使用TTS播放文本...');
+      speakText(text, language);
+      return;
     }
+
+    throw new Error('没有可播放的内容');
 
   } catch (error) {
     console.error('智能音频播放失败:', error);
@@ -107,8 +93,6 @@ export const playBase64Audio = async (base64AudioData: string, fallbackText?: st
       playsInSilentModeIOS: true,
       shouldDuckAndroid: true,
       playThroughEarpieceAndroid: false,
-      interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-      interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
     });
 
     // 加载音频文件
@@ -149,8 +133,6 @@ export const playBase64Audio = async (base64AudioData: string, fallbackText?: st
       if (status.isLoaded) {
         if (status.didJustFinish) {
           console.log('音频播放完成');
-        } else if (status.error) {
-          console.error('音频播放错误:', status.error);
         }
       }
     });
@@ -260,14 +242,18 @@ export const resumeAudioPlayback = async (): Promise<void> => {
 /**
  * 使用TTS朗读文本
  * @param text 要朗读的文本
+ * @param language 语言设置 ('zh' 为中文, 'en' 为英文)
  */
-export const speakText = (text: string): void => {
+export const speakText = (text: string, language: string = 'zh'): void => {
   try {
     // 停止当前播放的音频
     stopAudioPlayback();
     
+    // 根据语言选择合适的TTS语言
+    const speechLanguage = language === 'en' ? 'en-US' : 'zh-CN';
+    
     Speech.speak(text, {
-      language: 'zh-CN', // 中文
+      language: speechLanguage,
       pitch: 1, // 音调
       rate: 0.8, // 语速，略慢以适应老年用户
     });

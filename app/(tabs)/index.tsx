@@ -198,9 +198,10 @@ export default function ReaderScreen() {
         stopSpeaking();
         setIsPlaying(false);
       } else {
-        // 使用智能音频播放：iOS优先TTS，Android可尝试Base64音频
-        console.log("开始智能音频播放...");
-        await playAudioSmart(audioBase64, aiSummary, false); // 设置为false优先使用TTS
+        // 优先使用API返回的Base64音频，失败时使用TTS
+        console.log("开始播放音频...");
+        console.log("音频Base64数据长度:", audioBase64.length);
+        await playAudioSmart(audioBase64, aiSummary, language);
         console.log("音频播放成功");
         setIsPlaying(true);
         // 简单的播放状态管理，实际应用中可以监听播放完成事件
