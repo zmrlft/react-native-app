@@ -1,9 +1,11 @@
-import { Language } from '@/constants/i18n';
+import { Dialect, Language } from '@/constants/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_KEY_STORAGE_KEY = '@qwen_omni_api_key';
 const LANGUAGE_STORAGE_KEY = '@app_language';
+const DIALECT_STORAGE_KEY = '@app_dialect';
 const DEFAULT_LANGUAGE: Language = 'zh';
+const DEFAULT_DIALECT: Dialect = 'standard';
 
 /**
  * 保存API密钥到本地存储
@@ -73,5 +75,35 @@ export const setLanguage = async (language: Language): Promise<void> => {
   } catch (error) {
     console.error('Error saving language:', error);
     throw new Error('保存语言设置失败');
+  }
+};
+
+/**
+ * 获取用户选择的方言（仅中文支持）
+ * @returns 用户方言设置或默认方言
+ */
+export const getDialect = async (): Promise<Dialect> => {
+  try {
+    const savedDialect = await AsyncStorage.getItem(DIALECT_STORAGE_KEY);
+    if (savedDialect) {
+      return savedDialect as Dialect;
+    }
+    return DEFAULT_DIALECT;
+  } catch (error) {
+    console.error('Error getting dialect:', error);
+    return DEFAULT_DIALECT;
+  }
+};
+
+/**
+ * 保存用户选择的方言
+ * @param dialect 用户选择的方言
+ */
+export const setDialect = async (dialect: Dialect): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(DIALECT_STORAGE_KEY, dialect);
+  } catch (error) {
+    console.error('Error saving dialect:', error);
+    throw new Error('保存方言设置失败');
   }
 };

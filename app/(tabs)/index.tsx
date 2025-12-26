@@ -1,4 +1,5 @@
-import { Language, translations } from "@/constants/i18n";
+import { LanguageDialectPicker } from "@/components/LanguageDialectPicker";
+import { Dialect, Language, translations } from "@/constants/i18n";
 import {
   playAudioSmart,
   stopAudioPlayback,
@@ -10,7 +11,12 @@ import {
   takePhotoWithCamera,
 } from "@/services/imageService";
 import { callQwenOmniAPI } from "@/services/qwenOmniService";
-import { getApiKey, getLanguage } from "@/services/storageService";
+import {
+  getApiKey,
+  getDialect,
+  getLanguage,
+  setDialect as saveDialectToStorage,
+} from "@/services/storageService";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -33,6 +39,8 @@ export default function ReaderScreen() {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [hasApiKey, setHasApiKey] = useState<boolean>(false);
   const [language, setLanguage] = useState<Language>("zh");
+  const [dialect, setDialect] = useState<Dialect>("standard");
+  const [dialectPickerVisible, setDialectPickerVisible] = useState(false);
 
   // 翻译辅助函数
   const t = (key: string): string => {
@@ -53,6 +61,7 @@ export default function ReaderScreen() {
   useEffect(() => {
     checkApiKey();
     loadLanguage();
+    loadDialect();
   }, []);
 
   // 使用useFocusEffect在每次页面获得焦点时检查API密钥和语言
@@ -60,6 +69,7 @@ export default function ReaderScreen() {
     useCallback(() => {
       checkApiKey();
       loadLanguage();
+      loadDialect();
     }, [])
   );
 
@@ -70,6 +80,16 @@ export default function ReaderScreen() {
     } catch (error) {
       console.error("加载语言设置失败:", error);
       setLanguage("zh");
+    }
+  };
+
+  const loadDialect = async () => {
+    try {
+      const userDialect = await getDialect();
+      setDialect(userDialect);
+    } catch (error) {
+      console.error("加载方言设置失败:", error);
+      setDialect("standard");
     }
   };
 
@@ -133,8 +153,8 @@ export default function ReaderScreen() {
     setAudioBase64("");
 
     try {
-      // 调用API时传入语言参数
-      const response = await callQwenOmniAPI(base64Image, language);
+      // 调用API时传入语言和方言参数
+      const response = await callQwenOmniAPI(base64Image, language, dialect);
       if (response) {
         setAiSummary(response.text || t("home.aiSummary"));
         if (response.audioBase64) {
@@ -252,6 +272,18 @@ export default function ReaderScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t("home.title")}</Text>
 
+        {/* 方言选择按钮 - 仅在中文时显示 */}
+        {language === "zh" && (
+          <TouchableOpacity
+            style={styles.dialectButton}
+            onPress={() => setDialectPickerVisible(true)}
+          >
+            <Text style={styles.dialectButtonText}>
+              🎤 {language === "zh" ? "选择方言" : "Select Dialect"}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {!hasApiKey && (
           <View style={styles.warningContainer}>
             <Text style={styles.warningText}>{t("home.apiKeyRequired")}</Text>
@@ -260,7 +292,7 @@ export default function ReaderScreen() {
 
         {/* 图片选择区域 */}
         <View style={styles.imageSection}>
-          <Text style={styles.sectionTitle}>{t("home.title")}</Text>
+          {/* <Text style={styles.sectionTitle}>{t("home.title")}</Text> */}
           <View style={styles.buttonRow}>
             <TouchableOpacity
               style={[styles.primaryButton, isLoading && styles.disabledButton]}
@@ -345,6 +377,22 @@ export default function ReaderScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* 方言选择器模态框 */}
+      <LanguageDialectPicker
+        visible={dialectPickerVisible}
+        onClose={() => setDialectPickerVisible(false)}
+        currentDialect={dialect}
+        onSelectDialect={async (selected) => {
+          setDialect(selected);
+          try {
+            await saveDialectToStorage(selected);
+            console.log("方言已保存:", selected);
+          } catch (error) {
+            console.error("保存方言失败:", error);
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -361,8 +409,26 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 20,
     color: "#2c3e50",
+  },
+  dialectButton: {
+    backgroundColor: "#667eea",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  dialectButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
   warningContainer: {
     backgroundColor: "#fff3cd",

@@ -1,12 +1,29 @@
 // 支持的语言类型
 export type Language = 'zh' | 'en';
 
+// 方言类型
+export type Dialect = 'standard' | 'shanghai' | 'beijing' | 'sichuan' | 'nanjing' | 'shaanxi' | 'minnan' | 'cantonese' | 'cantonese2' | 'sichuan2';
+
+// 方言配置 - 仅中文支持方言
+export const dialectConfig: Record<Dialect, { label: string; voiceName: string }> = {
+  standard: { label: '标准普通话', voiceName: 'Cherry' },
+  shanghai: { label: '上海-阿珍', voiceName: 'Jada' },
+  beijing: { label: '北京-婉乐', voiceName: 'Dylan' },
+  sichuan: { label: '四川-晴儿', voiceName: 'Sunny' },
+  nanjing: { label: '南京-老李', voiceName: 'Li' },
+  shaanxi: { label: '陕西-秦川', voiceName: 'Marcus' },
+  minnan: { label: '闽南-阿杰', voiceName: 'Roy' },
+  cantonese: { label: '粤语-阿强', voiceName: 'Rocky' },
+  cantonese2: { label: '粤语-阿青', voiceName: 'Kiki' },
+  sichuan2: { label: '四川-彩川', voiceName: 'Eric' },
+};
+
 // 多语言文本内容
 export const translations = {
   zh: {
     // 主页面
     home: {
-      title: '图片识别助手',
+      title: '智能阅读助手',
       takePhoto: '拍照',
       pickImage: '从相册选择',
       processing: '处理中...',
@@ -54,6 +71,9 @@ export const translations = {
       selectLanguage: '选择语言',
       chinese: '中文',
       english: 'English',
+      dialect: '方言',
+      dialectSettings: '方言设置',
+      selectDialect: '选择方言',
     },
     // 权限相关
     permissions: {
@@ -144,8 +164,13 @@ export const getDefaultPrompt = (language: Language): string => {
 };
 
 // 获取AI配置中的语言声音设置
-export const getAudioVoice = (language: Language): string => {
-  // Qwen-Omni API 支持的语言特定语音
+export const getAudioVoice = (language: Language, dialect?: Dialect): string => {
+  // 如果是中文且指定了方言，使用方言对应的声音
+  if (language === 'zh' && dialect && dialect in dialectConfig) {
+    return dialectConfig[dialect].voiceName;
+  }
+  
+  // 使用语言默认声音
   if (language === 'en') {
     return 'Ethan'; // 英文女声
   }

@@ -1,4 +1,4 @@
-import { Language, getAudioVoice, getDefaultPrompt } from '@/constants/i18n';
+import { Dialect, getAudioVoice, getDefaultPrompt, Language } from '@/constants/i18n';
 import { fetch as expoFetch } from 'expo/fetch';
 import OpenAI from 'openai';
 import { getApiKey } from './storageService';
@@ -106,12 +106,14 @@ function addWavHeader(pcmBase64: string): string {
  * 调用Qwen-Omni API进行图片识别和分析（使用OpenAI SDK + expo/fetch）
  * @param base64Image Base64编码的图片
  * @param language 用户语言设置
+ * @param dialect 用户方言设置（仅中文支持）
  * @param textPrompt 文本提示，如果未提供将使用默认提示词
  * @returns 包含文本和音频的响应
  */
 export const callQwenOmniAPI = async (
   base64Image: string,
   language: Language = 'zh',
+  dialect?: Dialect,
   textPrompt?: string
 ): Promise<QwenOmniResponse | null> => {
   const apiKey = await getApiKey();
@@ -122,7 +124,7 @@ export const callQwenOmniAPI = async (
 
   // 使用提供的提示词或根据语言获取默认提示词
   const finalPrompt = textPrompt || getDefaultPrompt(language);
-  const audioVoice = getAudioVoice(language);
+  const audioVoice = getAudioVoice(language, dialect);
 
   try {
     // 初始化OpenAI客户端 - 使用expo/fetch以支持流式传输
